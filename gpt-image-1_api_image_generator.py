@@ -5,6 +5,10 @@ import shutil
 import base64
 from openai import OpenAI
 
+# Chemin du dossier images
+IMAGES_DIR = "IMAGES"
+os.makedirs(IMAGES_DIR, exist_ok=True)
+
 # Chargement de la configuration depuis config.json
 def load_config():
     config_file = "config.json"
@@ -22,11 +26,11 @@ if not API_KEY:
 client = OpenAI(api_key=API_KEY)
 
 def archive_current_image_copy():
-    current_file = "IMG_XXXX.png"
+    current_file = os.path.join(IMAGES_DIR, "IMG_XXXX.png")
     if not os.path.exists(current_file):
         return
 
-    archives = glob.glob("IMG_[0-9][0-9][0-9][0-9].png")
+    archives = glob.glob(os.path.join(IMAGES_DIR, "IMG_[0-9][0-9][0-9][0-9].png"))
     max_index = 0
     for file in archives:
         try:
@@ -37,7 +41,7 @@ def archive_current_image_copy():
             continue
 
     new_index = max_index + 1
-    new_name = f"IMG_{new_index:04d}.png"
+    new_name = os.path.join(IMAGES_DIR, f"IMG_{new_index:04d}.png")
     shutil.copyfile(current_file, new_name)
 
 def generate_image(prompt):
@@ -52,15 +56,20 @@ def generate_image(prompt):
             quality="medium",
             moderation="low"
         )
-        # Selon la version, accès direct à b64_json
         image_base64 = result.data[0].b64_json
         image_bytes = base64.b64decode(image_base64)
-        with open("IMG_XXXX.png", "wb") as img_file:
+        output_path = os.path.join(IMAGES_DIR, "IMG_XXXX.png")
+        with open(output_path, "wb") as img_file:
             img_file.write(image_bytes)
-        print("L'image a été téléchargée et sauvegardée sous 'IMG_XXXX.png'.")
+        print(f"L'image a été téléchargée et sauvegardée sous '{output_path}'.")
     except Exception as e:
         print("Une erreur s'est produite :", e)
 
 if __name__ == "__main__":
-    user_prompt = input("Que voulez-vous générer ? :\n")
-    generate_image(user_prompt)
+    prompt_file = "your_prompt.txt"
+    if not os.path.exists(prompt_file):
+        print(f"Le fichier '{prompt_file}' est introuvable.")
+    else:
+        with open(prompt_file, "r", encoding="utf-8") as f:
+            user_prompt = f.read().strip()
+        generate_image(user_prompt)
