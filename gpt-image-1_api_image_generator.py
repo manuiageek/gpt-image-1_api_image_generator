@@ -53,7 +53,7 @@ def generate_image(prompt):
             prompt=prompt,
             n=1,
             size="1024x1024",
-            quality="medium",
+            quality="high",
             moderation="low"
         )
         image_base64 = result.data[0].b64_json
